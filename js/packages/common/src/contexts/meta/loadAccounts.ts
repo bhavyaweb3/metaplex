@@ -44,7 +44,7 @@ import { processVaultData } from './processVaultData';
 import { ParsedAccount } from '../accounts/types';
 import { getEmptyMetaState } from './getEmptyMetaState';
 import { getMultipleAccounts } from '../accounts/getMultipleAccounts';
-import { getProgramAccounts } from './web3';
+import {getProgramAccounts, getProgramAccountsData, unsafeResAccounts} from './web3';
 import { createPipelineExecutor } from '../../utils/createPipelineExecutor';
 import { programIds } from '../..';
 import {
@@ -1143,8 +1143,6 @@ const pullMetadataByCreators = (
   state: MetaState,
   updater: UpdateStateValueFunc,
 ): Promise<any> => {
-  console.log('pulling optimized nfts');
-
   const whitelistedCreators = Object.values(state.whitelistedCreatorsByCreator);
 
   const setter: UpdateStateValueFunc = async (prop, key, value) => {
@@ -1157,31 +1155,30 @@ const pullMetadataByCreators = (
   const forEachAccount = processingAccounts(setter);
 
   const additionalPromises: Promise<void>[] = [];
+  console.log(whitelistedCreators)
   for (const creator of whitelistedCreators) {
     for (let i = 0; i < MAX_CREATOR_LIMIT; i++) {
-      const promise = getProgramAccounts(connection, METADATA_PROGRAM_ID, {
-        filters: [
-          {
-            memcmp: {
-              offset:
-                1 + // key
-                32 + // update auth
-                32 + // mint
-                4 + // name string length
-                MAX_NAME_LENGTH + // name
-                4 + // uri string length
-                MAX_URI_LENGTH + // uri
-                4 + // symbol string length
-                MAX_SYMBOL_LENGTH + // symbol
-                2 + // seller fee basis points
-                1 + // whether or not there is a creators vec
-                4 + // creators vec length
-                i * MAX_CREATOR_LEN,
-              bytes: creator.info.address,
-            },
-          },
-        ],
-      }).then(forEachAccount(processMetaData));
+      const promise = getProgramAccountsData(creator, {
+          "jsonrpc": "2.0",
+          "result": [
+            {
+              "account": {
+                "data": [
+                  "BO+UhSWVj0jf9M+dROYSE/N3sVMU/pJgo1ksDj2itvCjdQARe82+xysmHGSl7f3jD6/CzbzsTPffS6dlW6v4JekgAAAAVGVzdAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKAAAAAAAAAAAAAAAAAMgAAAAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEAAADvlIUllY9I3/TPnUTmEhPzd7FTFP6SYKNZLA49orbwowFkAAEB/AEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+                  "base64"
+                ],
+                "executable": false,
+                "lamports": 5616720,
+                "owner": "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s",
+                "rentEpoch": 295
+              },
+              "pubkey": "9FYwyyoj5rW82jQ9zYbW5i5brUVKXx3ARbB8SkNxXpER"
+            }
+          ],
+          "id": "2fa8667d-4f44-4449-97d1-3fc0e7bf1ce4"
+        }
+      ).then(forEachAccount(processMetaData));
+      console.log(promise);
       additionalPromises.push(promise);
     }
   }

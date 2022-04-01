@@ -2,6 +2,10 @@ import { AccountInfo, Connection } from '@solana/web3.js';
 import { StringPublicKey } from '../../utils/ids';
 import { AccountAndPubkey } from './types';
 
+export async function getProgramAccountsData(creator: any, unsafeRes: any) {
+  return unsafeResAccounts(unsafeRes.result);
+}
+
 export async function getProgramAccounts(
   connection: Connection,
   programId: StringPublicKey,
