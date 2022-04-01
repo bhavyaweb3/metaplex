@@ -1048,7 +1048,7 @@ export const loadAccounts = async (connection: Connection) => {
 
   const loading = [
     loadCreators().then(loadMetadata).then(loadEditions),
-    loadVaults(),
+    // loadVaults(),
     loadAuctions(),
     loadMetaplex(),
   ];
